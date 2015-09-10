@@ -1,0 +1,216 @@
+<html>
+<input id="AccessToken" type="text" value="" style="display:none"/>
+<div id="fb-root"></div>
+<script type="text/javascript">
+    window.fbAsyncInit = function(){
+        FB.init({ appId:'1621207984795854', status:true,  cookie:true, xfbml:true});
+        FB.getLoginStatus(function(response){
+        console.log(response);
+        });
+    };  
+
+    (function(d){
+        var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
+        js = d.createElement('script'); js.id = id; js.async = true;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        d.getElementsByTagName('head')[0].appendChild(js);
+    }(document));
+    var token = "";
+var getAuth = function(){
+	var authReq = new XMLHttpRequest();
+	var url = "https://graph.facebook.com/oauth/access_token?client_id=1621207984795854&client_secret=70882d86154f16d82200fd831d474831&grant_type=client_credentials";
+ 
+   authReq.open("GET", url, true);
+ 	authReq.onreadystatechange = function () {
+    var done = 4, ok = 200;
+    if (authReq.readyState == done && authReq.status == ok) {
+        var temp = authReq.responseText.split('=')[1];
+        token = temp;
+        getData(token);
+        
+    	}
+ 	};
+authReq.send(null);
+}
+var getData = function(){
+	var pageList = {};
+	var pageRequest = new XMLHttpRequest();
+	var str, queryInput = document.getElementById("searchPages");
+	if(!queryInput.value){
+	    return;
+	}
+	str = encodeURIComponent(queryInput.value);
+	var url = "https://graph.facebook.com/search?type=page&q="+ str +"&access_token=" + token;
+	pageRequest.open("GET", url, true);
+	pageRequest.onreadystatechange = function () {
+	    var done = 4, ok = 200;
+	    if (pageRequest.readyState == done && pageRequest.status == ok) {
+	        pageList = JSON.parse(pageRequest.responseText);
+	        displayResults(pageList);
+	    }
+	};
+	pageRequest.send(null);
+};
+
+var favorites = [];
+var displayResults = function(pages){
+   var resultDiv = document.getElementById('resultDiv');
+   resultDiv.style.display = "inline-block";
+   if(pages.data.length){
+      resultDiv.innerHTML = "";
+   }
+   else{
+      resultDiv.innerHTML = "No results found";
+   }
+   for(var i=0; i<pages.data.length; i++)
+   {
+      var name = pages.data[i].name, category = pages.data[i].category, id= pages.data[i].id;
+      var page = document.createElement("div");
+      var pname = document.createElement("div");
+      var detailBtn = document.createElement("button");
+      var favorite = document.createElement("button");
+      detailBtn.style.float = "right";
+      favorite.style.float = "right";
+      favorite.innerHTML = "Add to Favorites";
+      favorite.onclick = function(x){
+      	var tmp = x;
+      	return function(){
+      		favorites.push(x);
+      		console.log(favorites);
+      		showFavorites();
+      	}
+      }(pages.data[i]);
+       detailBtn.onclick = function(x){
+      	var tmp = x;
+      	return function(){
+      		getPageDetail(x.id);
+      	}
+      }(pages.data[i]);
+      var pcategory = document.createElement("p");
+      pname.innerHTML = name;
+      pname.style.margin = '10px';
+      detailBtn.innerHTML = "Details";
+      pname.appendChild(detailBtn);
+      pname.appendChild(favorite);
+      page.appendChild(pname);
+      page.style.padding = "5px";
+      page.style.border = "1px solid";
+      resultDiv.appendChild(page);
+     }
+    };
+
+
+   var getPageDetail = function(x){
+          getDetailsAjax(x);
+ };
+
+ var getDetailsAjax = function(pageId){
+	 var pageRequest = new XMLHttpRequest();
+	 var str = encodeURIComponent(pageId);
+
+	 FB.api(
+	    "/" + pageId+"?fields=about,picture,location",
+	    function (response) {
+	      if (response && !response.error) {
+	        displayDetailsResult(response);
+	        console.log(response);
+	      }
+	    }
+	);
+};
+var showFavorites = function(){
+	var favDisplay = document.getElementById('favPages');
+	favDisplay.innerHTML = "";
+	var heading = document.createElement("h3");
+	favDisplay.appendChild(heading);
+	heading.innerHTML = "Favourites";
+	if(favorites.length === 0){
+		var elemEmpty = document.createElement("div");
+		elemEmpty.innerHTML = "No Favourites Added";
+		favDisplay.appendChild(elemEmpty);
+	}
+	for(var i in favorites){
+		var elem = document.createElement("div");
+		var name = document.createElement("div");
+		name.innerHTML = favorites[i].name;
+		var remove = document.createElement("button");
+		remove.innerHTML = "Remove";
+		var detail = document.createElement("button");
+		detail.innerHTML = "Expand";
+		remove.onclick = function(x){
+			return function(){
+
+				var idx = favorites.indexOf(x);
+				favorites.splice(idx, 1);
+				showFavorites();
+				console.log(favorites);
+			}
+		}(favorites[i]);
+		detail.onclick = function(y){
+			return function(){
+				getDetailsAjax(y.id);
+			}
+		}(favorites[i]);
+		name.style.margin = '5px';
+		elem.appendChild(name);
+		elem.appendChild(remove);
+		elem.appendChild(detail);
+		elem.style.border = "1px solid";
+		favDisplay.appendChild(elem);
+		elem.style.padding = "10px";
+		favDisplay.style.padding = "10px";
+
+	}
+
+}
+var displayDetailsResult = function(detail){
+  var resultDiv = document.getElementById('details');
+  var heading = document.createElement("h3");
+  resultDiv.innerHTML = "";
+  var heading = document.createElement("h3");
+  heading.innerHTML = "Details";
+  var content = document.createElement("div");
+  var displayImage = document.createElement("img");
+  displayImage.src = detail.picture.data.url;
+  content.appendChild(displayImage);
+  for (key in detail) {
+    if (detail.hasOwnProperty(key) && key !== 'picture' && key !== 'id') {
+            var li = document.createElement("div");
+            if(typeof(detail[key]) !== 'object'){
+            li.innerHTML = detail[key];
+            content.appendChild(li);
+        } else {
+        	for(key1 in detail[key]){
+        		 var li1 = document.createElement("div");
+        		 li1.innerHTML = detail[key][key1];
+            	 content.appendChild(li1);
+
+        	}
+        }
+    }
+   }
+   resultDiv.appendChild(heading);
+   resultDiv.appendChild(content);
+   content.style.border = "1px solid";
+   content.style.padding = "10px";
+  };
+</script>
+<head>
+</head>
+<body>
+  <div>
+    <div>
+      <h3>Search Pages</h3>
+      <p ><input id="searchPages" type="text" placeholder="Enter name">
+     <button onclick="getAuth()" type="submit">Search</button>
+     </p>
+   </div>
+  </div>
+  <div>
+  <span id = "resultDiv" style="width: 30%;height: 80%; overflow-y: scroll; display:none;">
+  </span>
+  <span id ="details" style="width: 30%; display: inline-block; position:absolute; margin-left: 20px; padding:10px"></span>
+  <span id ="favPages" style="width: 30%; display: inline-block;float:right"></span>
+</div>
+ </body>
+</html>
