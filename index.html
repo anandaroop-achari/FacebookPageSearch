@@ -1,12 +1,7 @@
 <html>
-<input id="AccessToken" type="text" value="" style="display:none"/>
-<div id="fb-root"></div>
 <script type="text/javascript">
     window.fbAsyncInit = function(){
         FB.init({ appId:'1621207984795854', status:true,  cookie:true, xfbml:true});
-        FB.getLoginStatus(function(response){
-        console.log(response);
-        });
     };  
 
     (function(d){
@@ -46,6 +41,15 @@ var getData = function(){
 	    var done = 4, ok = 200;
 	    if (pageRequest.readyState == done && pageRequest.status == ok) {
 	        pageList = JSON.parse(pageRequest.responseText);
+	        pageList.data.sort(function(a,b){
+	        	if(a.name > b.name){
+	        		return 1;
+	        	} else if(a.name < b.name){
+	        		return -1;
+	        	} else {
+	        		return 0;
+	        	}
+	        })
 	        displayResults(pageList);
 	    }
 	};
@@ -76,7 +80,6 @@ var displayResults = function(pages){
       	var tmp = x;
       	return function(){
       		favorites.push(x);
-      		console.log(favorites);
       		showFavorites();
       	}
       }(pages.data[i]);
@@ -113,7 +116,6 @@ var displayResults = function(pages){
 	    function (response) {
 	      if (response && !response.error) {
 	        displayDetailsResult(response);
-	        console.log(response);
 	      }
 	    }
 	);
@@ -143,7 +145,6 @@ var showFavorites = function(){
 				var idx = favorites.indexOf(x);
 				favorites.splice(idx, 1);
 				showFavorites();
-				console.log(favorites);
 			}
 		}(favorites[i]);
 		detail.onclick = function(y){
