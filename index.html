@@ -10,7 +10,7 @@
         js.src = "//connect.facebook.net/en_US/all.js";
         d.getElementsByTagName('head')[0].appendChild(js);
     }(document));
-    var token = "";
+var token = "";
 var getAuth = function(){
 	var authReq = new XMLHttpRequest();
 	var url = "https://graph.facebook.com/oauth/access_token?client_id=1621207984795854&client_secret=70882d86154f16d82200fd831d474831&grant_type=client_credentials";
@@ -112,7 +112,7 @@ var displayResults = function(pages){
 	 var str = encodeURIComponent(pageId);
 
 	 FB.api(
-	    "/" + pageId+"?fields=about,picture,location",
+	    "/" + pageId+"?access_token="+ token +",fields=about,picture,location",
 	    function (response) {
 	      if (response && !response.error) {
 	        displayDetailsResult(response);
